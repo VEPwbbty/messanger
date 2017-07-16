@@ -103,6 +103,7 @@ public class DBManager {
             statement.execute("UPDATE USER " +
                     "SET NAME = '" + newName + "' " +
                     "WHERE ID = '" + user.getId() + "';");
+            user.setName(newName);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
