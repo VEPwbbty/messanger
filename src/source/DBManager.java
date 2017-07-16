@@ -62,14 +62,14 @@ public class DBManager {
      * @param name     of user
      * @return success this operation
      */
-    public boolean addUser(String login, String password, String name) {
+    public User addUser(String login, String password, String name) {
         try {
             statement.execute("INSERT INTO USER (LOGIN, PASSWORD, NAME) " +
                     "VALUES ('" + login + "', '" + password + "', '" + name + "');");
-            return true;
+            return getUser(login, password);
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
@@ -98,11 +98,11 @@ public class DBManager {
      * @param newName of user
      * @return success
      */
-    public boolean changeUserName(int userID, String newName) {
+    public boolean changeUserName(User user, String newName) {
         try {
             statement.execute("UPDATE USER " +
                     "SET NAME = '" + newName + "' " +
-                    "WHERE ID = '" + userID + "';");
+                    "WHERE ID = '" + user.getId() + "';");
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -115,11 +115,11 @@ public class DBManager {
      * @param newPassword of user
      * @return success
      */
-    public boolean changeUserPassword(int userID, String newPassword) {
+    public boolean changeUserPassword(User user, String newPassword) {
         try {
             statement.execute("UPDATE USER " +
                     "SET PASSWORD = '" + newPassword + "' " +
-                    "WHERE ID = '" + userID + "';");
+                    "WHERE ID = '" + user.getId() + "';");
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
