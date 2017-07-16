@@ -3,9 +3,7 @@ package source;
 import org.sqlite.JDBC;
 
 import java.sql.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class allow us to communicate with our database, that stores data of the messenger
@@ -25,6 +23,8 @@ public class DBManager {
      */
     private Statement statement;
 
+    private Map<String, User> users;
+
     /**
      * @param way to database
      * @throws SQLException when the class has problems with connection
@@ -33,6 +33,38 @@ public class DBManager {
         DriverManager.registerDriver(new JDBC());
         this.connection = DriverManager.getConnection(CON_STR + way);
         this.statement = this.connection.createStatement();
+
+        this.users = loadUsers();
+    }
+
+    private Map<String, User> loadUsers() {
+        try {
+            ResultSet user = statement.executeQuery("SELECT ID, NAME " +
+                    "FROM USER;");
+
+            Map<String, User> users = new HashMap<>();
+            while (user.next())
+                users.put(user.getString("LOGIN"),
+                        new User(user.getInt("ID"), user.getString("NAME"),
+                                user.getString("LOGIN"), user.getString("PASSWORD")));
+            return users;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new HashMap<>();
+        }
+    }
+
+    private User loadUser(String login) {
+        try {
+            ResultSet user = statement.executeQuery("SELECT ID, NAME " +
+                    "FROM USER " +
+                    "WHERE LOGIN = '" + login + "';");
+            return new User(user.getInt("ID"), user.getString("NAME"),
+                    user.getString("LOGIN"), user.getString("PASSWORD"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -43,15 +75,10 @@ public class DBManager {
      * @return user or null
      */
     public User getUser(String login, String password) {
-        try {
-            ResultSet user = statement.executeQuery("SELECT ID, NAME " +
-                    "FROM USER " +
-                    "WHERE LOGIN = '" + login + "' AND PASSWORD = '" + password + "';");
-            return new User(user.getInt("ID"), user.getString("NAME"));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+        if (!users.containsKey(login)) return null;
+        User target = users.get(login);
+        if (target.getPassword().equals(password)) return target;
+        throw new IllegalArgumentException();
     }
 
     /**
@@ -66,7 +93,9 @@ public class DBManager {
         try {
             statement.execute("INSERT INTO USER (LOGIN, PASSWORD, NAME) " +
                     "VALUES ('" + login + "', '" + password + "', '" + name + "');");
-            return getUser(login, password);
+            User newUser = loadUser(login);
+            users.put(login, newUser);
+            return newUser;
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -76,21 +105,10 @@ public class DBManager {
     /**
      * Get all users in DB
      *
-     * @return set of users
+     * @return collection of users
      */
-    public Set<User> getUsers() {
-        try {
-            ResultSet user = statement.executeQuery("SELECT ID, NAME " +
-                    "FROM USER;");
-
-            Set<User> users = new HashSet<>();
-            while (user.next())
-                users.add(new User(user.getInt("ID"), user.getString("NAME")));
-            return users;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return new HashSet<User>();
-        }
+    public Collection<User> getUsers() {
+        return users.values();
     }
 
     /**
@@ -103,7 +121,7 @@ public class DBManager {
             statement.execute("UPDATE USER " +
                     "SET NAME = '" + newName + "' " +
                     "WHERE ID = '" + user.getId() + "';");
-            user.setName(newName);
+            users.get(user.getLogin()).setName(newName);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -121,6 +139,7 @@ public class DBManager {
             statement.execute("UPDATE USER " +
                     "SET PASSWORD = '" + newPassword + "' " +
                     "WHERE ID = '" + user.getId() + "';");
+            users.get(user.getLogin()).setPassword(newPassword);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
