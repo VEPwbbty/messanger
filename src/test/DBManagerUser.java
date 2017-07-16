@@ -53,4 +53,12 @@ public class DBManagerUser {
         assertEquals(true, dbManager.changeUserName(4, "Виталий"));
         assertEquals(false, dbManager.changeUserName(5, "Виталий"));
     }
+
+    @Test
+    public void changePassword() {
+        assertEquals(true, dbManager.changeUserPassword(1, "Миша1"));
+        assertEquals(true, dbManager.changeUserPassword(-1, "Миша1"));
+        assertEquals(true, dbManager.changeUserPassword(4, "Виталий"));
+        assertEquals(true, dbManager.changeUserPassword(1, "Виталий"));
+    }
 }
