@@ -1,6 +1,6 @@
 package Parser
 
-class ParserK: Parser {
+object ParserK: Parser {
     override fun getQuery(text: String): Query = QueryK(text)
 
     override fun createQuery(name: String, vararg pair: Pair<String, String>) =
@@ -27,7 +27,7 @@ private class QueryK(override val text: String): Query {
         }
     }
 
-    override fun getString(parameter: String) = values[parameter]
+    override fun getString(parameter: String) = values[parameter] ?: ""
 
     override fun getInt(parameter: String) = values[parameter]?.toInt()
 }
