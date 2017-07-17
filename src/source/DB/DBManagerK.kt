@@ -73,7 +73,7 @@ class DBManagerK(way: String) : DBInterface {
             val messages = statement.executeQuery("SELECT LOGIN_CLIENT, MESSAGE, TIME " +
                     "FROM MESSAGE " +
                     "WHERE ID_CONV = '${conversation.id}' " +
-                    "ORDER BY ID;")
+                    "ORDER BY ID DESC;")
 
             val result = mutableListOf<DBMessage>()
 
@@ -82,7 +82,7 @@ class DBManagerK(way: String) : DBInterface {
                 val login = messages.getString("LOGIN_CLIENT")
                 val message = messages.getString("MESSAGE")
                 val time = Timestamp(SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(messages.getString("TIME")).time)
-                result.add(DBMessage(login_user = login, id_conv = conversation.id, text = message, time = time))
+                result.add(0, DBMessage(login_user = login, id_conv = conversation.id, text = message, time = time))
             }
             return result
         } catch (e: SQLException) {
