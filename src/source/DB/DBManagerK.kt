@@ -1,12 +1,8 @@
 package source.DB
 
 import org.sqlite.JDBC
-import source.Conversation
-import source.Message
-import source.User
 import java.sql.*
 import java.text.SimpleDateFormat
-import java.util.HashMap
 
 class DBManagerK(way: String) : DBInterface {
     /**
