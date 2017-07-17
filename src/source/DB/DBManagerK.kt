@@ -66,6 +66,29 @@ class DBManagerK(way: String) : DBInterface {
     }
 
     /**
+     * Load all users the conversation
+     */
+    override fun loadUsers(conversation: DBConversation): Set<DBUser> {
+        try {
+            //Get users
+            val users = statement.executeQuery("SELECT DISTINCT LOGIN_CLIENT " +
+                    "FROM CLIENT_CONV " +
+                    "WHERE ID_CONV = '${conversation.id}';")
+
+            val resultSet = mutableSetOf<DBUser>()
+
+            while (users.next()) {
+                val login = users.getString("LOGIN")
+                resultSet.add(loadUser(login)!!)
+            }
+            return resultSet
+        } catch (e: SQLException) {
+            e.printStackTrace()
+            return emptySet()
+        }
+    }
+
+    /**
      * Load last count messages from conversation
      */
     override fun loadMessages(conversation: DBConversation, count: Int): List<DBMessage> {

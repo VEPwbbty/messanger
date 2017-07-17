@@ -4,6 +4,7 @@ interface DBInterface {
     fun loadUser(login: String): DBUser? //++
     fun loadConversations(user: DBUser): Set<DBConversation> //++
     fun loadMessages(conversation: DBConversation, count: Int): List<DBMessage> //++
+    fun loadUsers(conversation: DBConversation): Set<DBUser>
 
     fun saveUser(user: DBUser): Boolean //++
     fun addConversation(name: String): DBConversation? //++
