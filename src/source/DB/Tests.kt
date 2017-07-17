@@ -79,6 +79,14 @@ class Tests {
     }
 
     @Test
+    fun loadUsers() {
+        val user1 = manager.loadUser("login1")!!
+        val user2 = manager.loadUser("login2")!!
+
+        assertEquals(setOf(user1, user2), manager.loadUsers(DBConversation(6, "conv1")))
+    }
+
+    @Test
     fun kick() {
         val user1 = manager.loadUser("login1")!!
         val user2 = manager.loadUser("login2")!!
