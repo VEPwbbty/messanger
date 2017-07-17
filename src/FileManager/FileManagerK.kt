@@ -15,7 +15,11 @@ class FileManagerK : FileInterface {
         return user
     }
 
-    override fun getDialogs(user: DBUser) = usersConversations[user] ?: usersConversations.put(user, manager.loadConversations(user).toMutableSet())!!
+    override fun getDialogs(user: DBUser): MutableSet<DBConversation> {
+        if (!usersConversations.containsKey(user))
+            usersConversations.put(user, manager.loadConversations(user).toMutableSet())
+        return usersConversations[user] ?: emptySet<DBConversation>().toMutableSet()
+    }
 
     private fun DBUser.getDialog(id_dialog: Int): DBConversation? = getDialogs(this).find { it.id == id_dialog }
 
