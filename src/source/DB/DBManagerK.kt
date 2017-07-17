@@ -71,17 +71,13 @@ class DBManagerK(way: String) : DBInterface {
     override fun loadUsers(conversation: DBConversation): Set<DBUser> {
         try {
             //Get users
-            val users = statement.executeQuery("SELECT DISTINCT LOGIN_CLIENT " +
-                    "FROM CLIENT_CONV " +
-                    "WHERE ID_CONV = '${conversation.id}';")
+            val users = statement.executeQuery("SELECT LOGIN_CLIENT FROM CLIENT_CONV WHERE ID_CONV = '${conversation.id}';")
 
-            val resultSet = mutableSetOf<DBUser>()
-
+            val middleSet = mutableSetOf<String>()
             while (users.next()) {
-                val login = users.getString("LOGIN")
-                resultSet.add(loadUser(login)!!)
+                middleSet.add(users.getString("LOGIN_CLIENT"))
             }
-            return resultSet
+            return middleSet.map { loadUser(it)!! }.toSet()
         } catch (e: SQLException) {
             e.printStackTrace()
             return emptySet()
