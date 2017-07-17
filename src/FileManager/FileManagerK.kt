@@ -3,14 +3,15 @@ package FileManager
 import source.DB.*
 
 class FileManagerK : FileInterface {
+
+    //TODO Change time of lastVisit in exit fun
+
     private class Dialog(val conversation: DBConversation) {
-        val id: Int = conversation.id
         val users = mutableSetOf<DBUser>()
+        var messages = mutableListOf<DBMessage>()
 
-        val messages = mutableListOf<DBMessage>()
-
-        override fun hashCode() = id
-        override fun equals(other: Any?) = (other is Dialog && other.id == id)
+        override fun hashCode() = conversation.id
+        override fun equals(other: Any?) = (other is Dialog && other.conversation.id == conversation.id)
     }
 
     private val manager: DBInterface = DBManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
@@ -25,33 +26,37 @@ class FileManagerK : FileInterface {
     override fun authorization(login: String, password: String): DBUser? {
         val user = manager.loadUser(login) ?: return null
         if (user.password != password) return null
-        activeUsers.put(user, mutableSetOf())
+
+        activeUsers.put(user, loadDialogs(user).toMutableSet())
         return user
     }
 
-    override fun getDialogs(user: DBUser): Set<DBConversation> {
+    private fun loadDialogs(user: DBUser): Set<DBConversation> {
         val conversations = manager.loadConversations(user)
-        if (activeUsers.containsKey(user)) activeUsers[user]!!.addAll(conversations)
-        for (i in conversations)
-            if (activeDialog.containsKey(i.id))
-                activeDialog[i.id]?.users?.add(user)
-            else {
-                val dial = Dialog(i)
-                dial.messages.addAll(getMessages(i.id, Int.MAX_VALUE))
-                dial.users.add(user)
-                activeDialog.put(i.id, dial)
-            }
+        for (i in conversations) {
+            if (!activeDialog.containsKey(i.id)) activeDialog.put(i.id, Dialog(i))
+            activeDialog[i.id]!!.users.add(user)
+        }
         return conversations
     }
 
+    override fun getDialogs(user: DBUser) = activeUsers[user] ?: emptySet<DBConversation>()
+
+    private fun DBUser.inDialog(id_dialog: Int) =
+
     override fun getMessage(user: DBUser, id_dialog: Int, count: Int): List<DBMessage>? {
-        if (!activeDialog.containsKey(id_dialog) || !(activeDialog[id_dialog]?.users?.contains(user) ?: false)) return null
-        val messages = activeDialog[id_dialog]!!.messages
-        return messages.subList(messages.size - count, messages.size - 1)
+        if (!(activeDialog[id_dialog]?.users?.contains(user) ?: return null)) return null
+
+        val dialog = activeDialog[id_dialog]!!
+
+        if (dialog.messages.size < count)
+            dialog.messages = manager.loadMessages(dialog.conversation, count).toMutableList()
+
+        return dialog.messages.subList(dialog.messages.size - count, dialog.messages.size)
     }
 
     override fun signUp(login: String, password: String, name: String): Boolean {
-        return manager.saveUser(DBUser(login = login, password = password, name = name, lastVisit = null))
+        return manager.loadUser(login) == null && manager.saveUser(DBUser(login = login, password = password, name = name, lastVisit = null))
     }
 
     override fun setName(user: DBUser, newName: String): Boolean {
@@ -60,18 +65,17 @@ class FileManagerK : FileInterface {
     }
 
     override fun setPassword(user: DBUser, newPassword: String): Boolean {
-        user.name = newPassword
+        user.password = newPassword
         return manager.saveUser(user)
     }
 
     override fun exit(user: DBUser): Boolean {
         if (!activeUsers.containsKey(user)) return false
-        for ((id) in activeUsers[user]!!) {
+        for ((id) in activeUsers[user]!!)
             if (activeDialog.containsKey(id)) {
                 activeDialog[id]!!.users.remove(user)
                 if (activeDialog[id]!!.users.isEmpty()) activeDialog.remove(id)
             }
-        }
         return true
     }
 
@@ -83,7 +87,7 @@ class FileManagerK : FileInterface {
     }
 
     override fun inviteUser(user: DBUser, id_dialog: Int, loginInvited: String): Boolean {
-        if (!activeDialog.containsKey(id_dialog) || !(activeDialog[id_dialog]?.users?.contains(user) ?: false)) return false
+        if (!(activeDialog[id_dialog]?.users?.contains(user) ?: return false)) return false
         val invitedUser = manager.loadUser(loginInvited) ?: return false
 
         if (!manager.addUserToConversation(invitedUser, activeDialog[id_dialog]!!.conversation)) return false
@@ -92,7 +96,7 @@ class FileManagerK : FileInterface {
     }
 
     override fun kickUser(user: DBUser, id_dialog: Int, loginKicked: String): Boolean {
-        if (!activeDialog.containsKey(id_dialog) || !(activeDialog[id_dialog]?.users?.contains(user) ?: false)) return false
+        if (!(activeDialog[id_dialog]?.users?.contains(user) ?: return false)) return false
         val kickedUser = manager.loadUser(loginKicked) ?: return false
 
         if (!manager.kickFromConversation(kickedUser, activeDialog[id_dialog]!!.conversation)) return false
