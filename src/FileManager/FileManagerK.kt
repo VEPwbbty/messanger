@@ -1,53 +1,26 @@
 package FileManager
 
 import source.DB.*
+import sun.plugin2.message.Conversation
 
 class FileManagerK : FileInterface {
 
-    //TODO Change time of lastVisit in exit fun
-
-    private class Dialog(val conversation: DBConversation) {
-        val users = mutableSetOf<DBUser>()
-        var messages = mutableListOf<DBMessage>()
-
-        override fun hashCode() = conversation.id
-        override fun equals(other: Any?) = (other is Dialog && other.conversation.id == conversation.id)
-    }
-
     private val manager: DBInterface = DBManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
 
-    private val activeDialog = mutableMapOf<Int, Dialog>()
+    private val usersConversations = mutableMapOf<DBUser, MutableSet<DBConversation>>()
 
     override fun authorization(login: String, password: String): DBUser? {
         val user = manager.loadUser(login) ?: return null
         if (user.password != password) return null
-
-        loadDialogs(user)
         return user
     }
 
-    private fun loadDialogs(user: DBUser): Set<DBConversation> {
-        val conversations = manager.loadConversations(user)
-        for (i in conversations) {
-            if (!activeDialog.containsKey(i.id)) activeDialog.put(i.id, Dialog(i))
-            activeDialog[i.id]!!.users.add(user)
-        }
-        return conversations
-    }
+    override fun getDialogs(user: DBUser) = usersConversations[user] ?: usersConversations.put(user, manager.loadConversations(user).toMutableSet())!!
 
-    override fun getDialogs(user: DBUser) = manager.loadConversations(user)
-
-    private fun DBUser.inDialog(id_dialog: Int) = activeDialog[id_dialog]?.users?.contains(this) ?: false
+    private fun DBUser.getDialog(id_dialog: Int): DBConversation? = getDialogs(this).find { it.id == id_dialog }
 
     override fun getMessage(user: DBUser, id_dialog: Int, count: Int): List<DBMessage>? {
-        if (!user.inDialog(id_dialog)) return null
-
-        val conversation = activeDialog[id_dialog]!!.conversation
-        var messages = activeDialog[id_dialog]!!.messages
-
-        if (messages.size < count) messages = manager.loadMessages(conversation, count).toMutableList()
-
-        return messages.subList(maxOf(messages.size - count, 0), messages.size)
+        return manager.loadMessages(user.getDialog(id_dialog) ?: return null, count)
     }
 
     override fun signUp(login: String, password: String, name: String): Boolean {
@@ -65,47 +38,38 @@ class FileManagerK : FileInterface {
     }
 
     override fun exit(user: DBUser) {
-        activeDialog.forEach { _, u -> u.users.remove(user) }
+
+        usersConversations.remove(user)
     }
 
     override fun createConversation(user: DBUser, name: String): DBConversation? {
-        val dialog = Dialog(manager.addConversation(name) ?: return null)
-        activeDialog.put(dialog.conversation.id, dialog)
+        return user.toConversation(manager.addConversation(name) ?: return null)
+    }
 
-        manager.addUserToConversation(user, dialog.conversation)
-        dialog.users.add(user)
-        return dialog.conversation
+    private fun DBUser.toConversation(conversation: DBConversation): DBConversation? {
+        if (!manager.addUserToConversation(this, conversation)) return null
+        getDialogs(this).add(conversation)
+        return conversation
     }
 
     override fun inviteUser(user: DBUser, id_dialog: Int, loginInvited: String): Boolean {
-        if (!user.inDialog(id_dialog)) return false
-        val invitedUser = manager.loadUser(loginInvited) ?: return false
-
-        if (!manager.addUserToConversation(invitedUser, activeDialog[id_dialog]!!.conversation)) return false
-        activeDialog[id_dialog]!!.users.add(invitedUser)
+        manager.loadUser(loginInvited)?.toConversation(user.getDialog(id_dialog) ?: return false) ?: return false
         return true
     }
 
     override fun kickUser(user: DBUser, id_dialog: Int, loginKicked: String): Boolean {
-        if (!user.inDialog(id_dialog)) return false
+        val conversation = user.getDialog(id_dialog) ?: return false
         val kickedUser = manager.loadUser(loginKicked) ?: return false
 
-        if (!manager.kickFromConversation(kickedUser, activeDialog[id_dialog]!!.conversation)) return false
-        activeDialog[id_dialog]!!.users.remove(kickedUser)
+        if (!manager.kickFromConversation(kickedUser, conversation)) return false
+        getDialogs(user).remove(conversation)
         return true
     }
 
     override fun sendMessage(user: DBUser, id_dialog: Int, text: String): Set<DBUser>? {
-        if (!user.inDialog(id_dialog)) return null
-        manager.addMessage(user, activeDialog[id_dialog]!!.conversation, text)
+        val conversation = user.getDialog(id_dialog) ?: return null
+        manager.addMessage(user, conversation, text)
 
-        activeDialog[id_dialog]!!.messages.addAll(getMessages(id_dialog, 1))
-        return activeDialog[id_dialog]!!.users
-    }
-
-    private fun getMessages(id_dialog: Int, count: Int): List<DBMessage> {
-        val currentMessage = manager.loadMessages(activeDialog[id_dialog]!!.conversation, count)
-        activeDialog[id_dialog]!!.messages.addAll(currentMessage)
-        return currentMessage
+        return manager.loadUsers(conversation)
     }
 }
