@@ -47,7 +47,7 @@ class FileManagerK : FileInterface {
 
         if (messages.size < count) messages = manager.loadMessages(conversation, count).toMutableList()
 
-        return messages.subList(messages.size - count, messages.size)
+        return messages.subList(maxOf(messages.size - count, 0), messages.size)
     }
 
     override fun signUp(login: String, password: String, name: String): Boolean {

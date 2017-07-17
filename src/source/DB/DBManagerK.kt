@@ -169,7 +169,7 @@ class DBManagerK(way: String) : DBInterface {
      */
     override fun addMessage(sender: DBUser, conversation: DBConversation, text: String) = execute("" +
             "INSERT INTO MESSAGE (LOGIN_CLIENT, ID_CONV, MESSAGE) " +
-            "VALUES ('${sender.login}', '${conversation.id}', '$text');")
+            "VALUES ('${sender.login}', '${conversation.id}', '${text.replace("'", "''")}');")
 
     private fun execute(sql: String): Boolean {
         try {
