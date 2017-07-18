@@ -81,7 +81,6 @@ class Server(val port: Int) : Runnable {
             buf.clear()
         }
 
-        println("Прислано $sb")
         val query = ParserK.getQuery(sb.toString())
         when (query.getName()) {
             "login" -> {
