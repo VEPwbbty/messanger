@@ -25,6 +25,7 @@ class Server(val port: Int) : Runnable {
     init {
         //Set socket on our ServerSocketChannel
         this.ssc.socket().bind(InetSocketAddress(port))
+        //Make ssc not blocking
         this.ssc.configureBlocking(false)
 
         //Selector says us if there will be new client to accepted on our socket
