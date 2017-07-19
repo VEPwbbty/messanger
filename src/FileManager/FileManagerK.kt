@@ -52,9 +52,10 @@ class FileManagerK(way: String) : DBManagerK(way), FileInterface {
 
     override fun kickUser(user: User, id_dialog: Int, loginKicked: String): Boolean {
         val conversation = user.getDialog(id_dialog) ?: return false
+        val kickedUser = loadUser(loginKicked) ?: return false
 
-        if (!conversation.kickUser(loadUser(loginKicked) ?: return false)) return false
-        getDialogs(user).remove(conversation)
+        if (!conversation.kickUser(kickedUser)) return false
+        getDialogs(kickedUser).remove(conversation)
         return true
     }
 
