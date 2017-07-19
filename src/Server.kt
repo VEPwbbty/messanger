@@ -1,14 +1,12 @@
 import FileManager.FileInterface
 import FileManager.FileManagerK
 import Parser.ParserK
+import Parser.Query
 import source.DB.Interfaces.User
-import java.nio.channels.SelectionKey
 import java.net.InetSocketAddress
-import java.nio.channels.ServerSocketChannel
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.channels.Selector
-import java.nio.channels.SocketChannel
+import java.nio.channels.*
 
 
 class Server(val port: Int) : Runnable {
@@ -18,9 +16,8 @@ class Server(val port: Int) : Runnable {
     private val selector: Selector = Selector.open()
     private val buf = ByteBuffer.allocate(256)
 
-    private val authorizedUsers = mutableMapOf<SocketChannel, User>()
-
-    private val manager: FileInterface = FileManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
+    private var lastID = 0
+    private val channelMap = mutableMapOf<Int, SocketChannel>()
 
     init {
         //Set socket on our ServerSocketChannel
@@ -56,10 +53,11 @@ class Server(val port: Int) : Runnable {
     }
 
     private fun handleAccept(key: SelectionKey) {
-        println("New connection")
+        println("new Connection")
         val sc = (key.channel() as ServerSocketChannel).accept()
         sc.configureBlocking(false)
-        sc.register(selector, SelectionKey.OP_READ)
+        sc.register(selector, SelectionKey.OP_READ, lastID)
+        channelMap[lastID++] = sc
     }
 
     private fun SocketChannel.write(text: String) {
@@ -82,9 +80,10 @@ class Server(val port: Int) : Runnable {
             buf.clear()
         }
 
-        if(read<0) {
-            println("$ch left the chat.\n");
-            ch.close();
+        if (read < 0) {
+            println("$ch left the chat.\n")
+            channelMap.remove(key.attachment() as Int)
+            ch.close()
         }
 
         println("Text from $ch: ${sb.toString()}")
@@ -92,32 +91,10 @@ class Server(val port: Int) : Runnable {
         for (line in sb.toString().lines()) {
             val query = ParserK.getQuery(line) ?: continue
             println("line = $line. Query: ${query.text}")
-            when (query.name) {
-                "login" -> {
-                    val user = manager.authorization(query["login"] ?: return, query["pass"] ?: return)
-                    if (user != null) {
-                        authorizedUsers.put(ch, user)
-                        ch.write(ParserK.createQuery("user", Pair("name", user.name)).text)
-                    }
-                }
-                "message" -> {
-                    if (authorizedUsers.containsKey(ch)) {
-                        val user = authorizedUsers[ch]!!
-                        val conversation = query["conv"]?.toInt() ?: return
-                        val text = query["text"] ?: return
-
-                        val users = manager.sendMessage(user, conversation, text)
-
-                        if (users != null) {
-                            authorizedUsers.forEach { t, u ->
-                                if (users.contains(u))
-                                    t.write(ParserK.createQuery("mess",
-                                            Pair("author", user.login),
-                                            Pair("conv", conversation.toString()),
-                                            Pair("text", text)).text)
-                            }
-                        }
-                    }
+            getCommand(key.attachment() as Int, query)?.perform()?.forEach {
+                idChannel, list ->
+                list.forEach {
+                    channelMap[idChannel]?.write(it)
                 }
             }
         }
