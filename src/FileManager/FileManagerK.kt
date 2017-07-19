@@ -6,6 +6,9 @@ import source.DB.Interfaces.DBInterface
 import source.DB.Interfaces.Message
 import source.DB.Interfaces.User
 
+/**
+ * Special class, that doesn't allow to get or send wrong data, and optimize get conversations of users
+ */
 class FileManagerK(way: String) : DBManagerK(way), FileInterface {
 
     private val usersConversations = mutableMapOf<User, MutableSet<Conversation>>()
