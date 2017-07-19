@@ -1,7 +1,8 @@
 package Parser
 
 object ParserK : Parser {
-    override fun getQuery(text: String): Query? {
+    override fun getQuery(message: String): Query? {
+        val text = message.replace("\r", "").replace("\n", "")
         if (!text.matches(Regex("""[\d\w]+\{([\d\w]+\[\d+].*)+}"""))) return null
         val resultQuery = MapQuery(text)
 
@@ -10,10 +11,10 @@ object ParserK : Parser {
         val fields = Regex("\\{.*}\$").find(text, 0)?.value ?: return null
         var startIndex = 1
 
-        while (startIndex != fields.length - 1) {
+        while (fields[startIndex] != '}') {
             val brace = Regex("""\[[\d]+]""").find(fields, startIndex) ?: return null
             val lengthArgument = brace.value.substring(1, brace.value.length - 1).toInt()
-            
+
             if (brace.range.last + 2 + lengthArgument > fields.length) return null
 
             val name = fields.substring(startIndex, brace.range.first)
@@ -43,4 +44,8 @@ private class MapQuery(override val text: String) : Query {
     operator fun set(key: String, value: String) {
         values[key] = value
     }
+}
+
+fun main(args: Array<String>) {
+    println(ParserK.createQuery("message", Pair("conv", "6"), Pair("text", "Hello world")).text)
 }

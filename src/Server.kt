@@ -20,7 +20,7 @@ class Server(val port: Int) : Runnable {
 
     private val authorizedUsers = mutableMapOf<SocketChannel, User>()
 
-    private val manager: FileInterface = FileManagerK()
+    private val manager: FileInterface = FileManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
 
     init {
         //Set socket on our ServerSocketChannel
@@ -53,10 +53,10 @@ class Server(val port: Int) : Runnable {
             System.out.println("IOException, server of port " + this.port + " terminating. Stack trace:")
             e.printStackTrace()
         }
-
     }
 
     private fun handleAccept(key: SelectionKey) {
+        println("New connection")
         val sc = (key.channel() as ServerSocketChannel).accept()
         sc.configureBlocking(false)
         sc.register(selector, SelectionKey.OP_READ)
@@ -81,32 +81,46 @@ class Server(val port: Int) : Runnable {
             sb.append(String(bytes))
             buf.clear()
         }
-//
-//        val query = ParserK.getQuery(sb.toString())!!
-//        when (query.name) {
-//            "login" -> {
-//                val user = manager.authorization(query.getString("login"), query.getString("pass"))
-//                if (user != null) {
-//                    authorizedUsers.put(ch, user)
-//                    ch.write(ParserK.createQuery("user", Pair("name", user.name)).text)
-//                }
-//            }
-//            "message" -> {
-//                if (authorizedUsers.containsKey(ch)) {
-//                    val user = authorizedUsers[ch]!!
-//                    val users = manager.sendMessage(user, query.getInt("conv")!!, query.getString("text"))
-//                    if (users != null) {
-//                        authorizedUsers.forEach { t, u ->
-//                            if (users.contains(u))
-//                                t.write(ParserK.createQuery("mess",
-//                                        Pair("author", user.login),
-//                                        Pair("conv", query.getString("conv")),
-//                                        Pair("text", query.getString("text"))).text)
-//                        }
-//                    }
-//                }
-//            }
-//        }
+
+        if(read<0) {
+            println("$ch left the chat.\n");
+            ch.close();
+        }
+
+        println("Text from $ch: ${sb.toString()}")
+
+        for (line in sb.toString().lines()) {
+            val query = ParserK.getQuery(line) ?: continue
+            println("line = $line. Query: ${query.text}")
+            when (query.name) {
+                "login" -> {
+                    val user = manager.authorization(query["login"] ?: return, query["pass"] ?: return)
+                    if (user != null) {
+                        authorizedUsers.put(ch, user)
+                        ch.write(ParserK.createQuery("user", Pair("name", user.name)).text)
+                    }
+                }
+                "message" -> {
+                    if (authorizedUsers.containsKey(ch)) {
+                        val user = authorizedUsers[ch]!!
+                        val conversation = query["conv"]?.toInt() ?: return
+                        val text = query["text"] ?: return
+
+                        val users = manager.sendMessage(user, conversation, text)
+
+                        if (users != null) {
+                            authorizedUsers.forEach { t, u ->
+                                if (users.contains(u))
+                                    t.write(ParserK.createQuery("mess",
+                                            Pair("author", user.login),
+                                            Pair("conv", conversation.toString()),
+                                            Pair("text", text)).text)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
