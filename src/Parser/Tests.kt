@@ -7,12 +7,13 @@ class Tests {
 
     @Test
     fun query() {
-        val query = ParserK.getQuery("""object{var1[28]hi. my name is john! |cu cu|var2[2]huvar3[2]hov[4]2345}""")
-        assertEquals("object", query.getName())
-        assertEquals("hi. my name is john! |cu cu|", query.getString("var1"))
-        assertEquals("hu", query.getString("var2"))
-        assertEquals("ho", query.getString("var3"))
-        assertEquals(2345, query.getInt("v"))
+        val query = ParserK.getQuery("""object{var1[28]hi.  |cu cu|var2[2]huvar3[2]hov[3]2345}""")!!
+
+        assertEquals("object", query.name)
+        assertEquals("hi. my name is john! |cu cu|", query["var1"])
+        assertEquals("hu", query["var2"])
+        assertEquals("ho", query["var3"])
+        assertEquals(2345, query["v"]?.toInt())
     }
 
     @Test
@@ -22,7 +23,3 @@ class Tests {
     }
 }
 
-fun main(args: Array<String>) {
-    println(ParserK.createQuery("message", Pair("conv","6"), Pair("text", "Hello from first")).text)
-    println(ParserK.createQuery("message", Pair("conv","6"), Pair("text", "Hello from second")).text)
-}
