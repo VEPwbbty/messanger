@@ -26,12 +26,16 @@ object ParserK : Parser {
         return resultQuery
     }
 
-    override fun createQuery(name: String, vararg pair: Pair<String, String>): Query {
-        val query = MapQuery("$name{${pair.joinToString(separator = "") { "${it.first}[${it.second.length}]${it.second}" }}}")
+    override fun createQuery(name: String, vararg pair: Pair<String, Any>): Query = ParserK.createQuery(name, pair.toSet())
+
+    override fun createQuery(name: String, pair: Set<Pair<String, Any>>): Query {
+        val query = MapQuery("$name{${pair.joinToString(separator = "") { "${it.first}[${it.second.toString().length}]${it.second}" }}}")
         query.name = name
-        pair.forEach { query[it.first] = it.second }
+        pair.forEach { query[it.first] = it.second.toString() }
         return query
     }
+
+    override fun boolQuery(result: Boolean) = createQuery("answer", Pair("res", if (result) "success" else "fail"))
 }
 
 private class MapQuery(override val text: String) : Query {
@@ -47,5 +51,5 @@ private class MapQuery(override val text: String) : Query {
 }
 
 fun main(args: Array<String>) {
-    println(ParserK.createQuery("message", Pair("conv", "6"), Pair("text", "Hello world")).text)
+    println(ParserK.createQuery("messOfConv", Pair("dial", "6"), Pair("count", "20")).text)
 }
