@@ -1,13 +1,13 @@
 import FileManager.FileInterface
 import FileManager.FileManagerK
 import Parser.ParserK
+import source.DB.Interfaces.User
 import java.nio.channels.SelectionKey
 import java.net.InetSocketAddress
 import java.nio.channels.ServerSocketChannel
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.Selector
-import source.DB.DBUser
 import java.nio.channels.SocketChannel
 
 
@@ -18,7 +18,7 @@ class Server(val port: Int) : Runnable {
     private val selector: Selector = Selector.open()
     private val buf = ByteBuffer.allocate(256)
 
-    private val authorizedUsers = mutableMapOf<SocketChannel, DBUser>()
+    private val authorizedUsers = mutableMapOf<SocketChannel, User>()
 
     private val manager: FileInterface = FileManagerK()
 

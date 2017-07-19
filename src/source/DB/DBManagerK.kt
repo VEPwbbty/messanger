@@ -134,10 +134,13 @@ class DBManagerK(way: String) : DBInterface {
     /**
      * Update this user
      */
-    override fun User.save(password: String, name: String) = execute("UPDATE USER " +
-            "SET PASSWORD = '$password', " +
-            "NAME = '$name' " +
-            "WHERE LOGIN = '$login';")
+    override fun User.save(password: String, name: String): Boolean {
+        if (!execute("UPDATE USER SET PASSWORD = '$password', NAME = '$name' WHERE LOGIN = '$login';")) return false
+        this as DBUser
+        this.name = name
+        this.password = password
+        return true
+    }
 
 
     /**

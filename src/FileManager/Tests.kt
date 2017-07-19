@@ -2,14 +2,11 @@ package FileManager
 
 import junit.framework.Assert.assertEquals
 import org.junit.Test
-import source.DB.DBConversation
 import source.DB.DBManagerK
-import source.DB.DBUser
-import java.io.BufferedReader
 import java.util.*
 
 class Tests {
-    val manager: FileInterface = FileManagerK()
+    /*val manager: FileInterface = FileManagerK()
     val dbman: DBManagerK = DBManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
 
     @Test
@@ -99,4 +96,4 @@ fun main(array: Array<String>) {
         manager.sendMessage(user, id_dialog, reader.nextLine())
         println(manager.getMessage(user, id_dialog, 1))
     }
-}
+*/}

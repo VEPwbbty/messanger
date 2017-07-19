@@ -1,29 +1,75 @@
 package FileManager
 
 import source.DB.*
-import sun.plugin2.message.Conversation
+import source.DB.Interfaces.Conversation
+import source.DB.Interfaces.DBInterface
+import source.DB.Interfaces.Message
+import source.DB.Interfaces.User
 
 class FileManagerK : FileInterface {
+    override fun authorization(login: String, password: String): User? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-    private val manager: DBInterface = DBManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
+    override fun getDialogs(user: User): Set<Conversation> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-    private val usersConversations = mutableMapOf<DBUser, MutableSet<DBConversation>>()
+    override fun getMessage(user: User, id_dialog: Int, count: Int): List<Message>? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-    override fun authorization(login: String, password: String): DBUser? {
+    override fun signUp(login: String, password: String, name: String): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun setName(user: User, newName: String): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun setPassword(user: User, newPassword: String): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun createConversation(user: User, name: String): Conversation? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun inviteUser(user: User, id_dialog: Int, loginInvited: String): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun kickUser(user: User, id_dialog: Int, loginKicked: String): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun sendMessage(user: User, id_dialog: Int, text: String): Set<User>? {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun exit(user: User) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    /*private val manager: DBInterface = DBManagerK("C:\\sqlite-dll-win64-x64-3190300\\messenger.db")
+
+    private val usersConversations = mutableMapOf<User, MutableSet<Conversation>>()
+
+    override fun authorization(login: String, password: String): User? {
         val user = manager.loadUser(login) ?: return null
         if (user.password != password) return null
         return user
     }
 
-    override fun getDialogs(user: DBUser): MutableSet<DBConversation> {
+    override fun getDialogs(user: User): MutableSet<Conversation> {
         if (!usersConversations.containsKey(user))
-            usersConversations.put(user, manager.loadConversations(user).toMutableSet())
-        return usersConversations[user] ?: emptySet<DBConversation>().toMutableSet()
+            usersConversations.put(user, user.conversations().toMutableSet())
+        return usersConversations[user] ?: emptySet<Conversation>().toMutableSet()
     }
 
-    private fun DBUser.getDialog(id_dialog: Int): DBConversation? = getDialogs(this).find { it.id == id_dialog }
+    private fun User.getDialog(id_dialog: Int): Conversation? = getDialogs(this).find { it.id == id_dialog }
 
-    override fun getMessage(user: DBUser, id_dialog: Int, count: Int): List<DBMessage>? {
+    override fun getMessage(user: User, id_dialog: Int, count: Int): List<DBMessage>? {
         return manager.loadMessages(user.getDialog(id_dialog) ?: return null, count)
     }
 
@@ -76,4 +122,4 @@ class FileManagerK : FileInterface {
 
         return manager.loadUsers(conversation)
     }
-}
+*/}
