@@ -81,32 +81,32 @@ class Server(val port: Int) : Runnable {
             sb.append(String(bytes))
             buf.clear()
         }
-
-        val query = ParserK.getQuery(sb.toString())
-        when (query.getName()) {
-            "login" -> {
-                val user = manager.authorization(query.getString("login"), query.getString("pass"))
-                if (user != null) {
-                    authorizedUsers.put(ch, user)
-                    ch.write(ParserK.createQuery("user", Pair("name", user.name)).text)
-                }
-            }
-            "message" -> {
-                if (authorizedUsers.containsKey(ch)) {
-                    val user = authorizedUsers[ch]!!
-                    val users = manager.sendMessage(user, query.getInt("conv")!!, query.getString("text"))
-                    if (users != null) {
-                        authorizedUsers.forEach { t, u ->
-                            if (users.contains(u))
-                                t.write(ParserK.createQuery("mess",
-                                        Pair("author", user.login),
-                                        Pair("conv", query.getString("conv")),
-                                        Pair("text", query.getString("text"))).text)
-                        }
-                    }
-                }
-            }
-        }
+//
+//        val query = ParserK.getQuery(sb.toString())!!
+//        when (query.name) {
+//            "login" -> {
+//                val user = manager.authorization(query.getString("login"), query.getString("pass"))
+//                if (user != null) {
+//                    authorizedUsers.put(ch, user)
+//                    ch.write(ParserK.createQuery("user", Pair("name", user.name)).text)
+//                }
+//            }
+//            "message" -> {
+//                if (authorizedUsers.containsKey(ch)) {
+//                    val user = authorizedUsers[ch]!!
+//                    val users = manager.sendMessage(user, query.getInt("conv")!!, query.getString("text"))
+//                    if (users != null) {
+//                        authorizedUsers.forEach { t, u ->
+//                            if (users.contains(u))
+//                                t.write(ParserK.createQuery("mess",
+//                                        Pair("author", user.login),
+//                                        Pair("conv", query.getString("conv")),
+//                                        Pair("text", query.getString("text"))).text)
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }
 
