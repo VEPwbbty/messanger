@@ -1,7 +1,6 @@
 package source.DB.Interfaces
 
 interface DBInterface {
-    fun loadUser(login: String): User? //++
     fun User.conversations(): Set<Conversation> //++
     fun Conversation.messages(count: Int): List<Message> //++
     fun Conversation.users(): Set<User> //++

@@ -17,7 +17,7 @@ data class DBMessage(override val login_user: String,
                      override val time: Timestamp) : Message
 
 
-class DBManagerK(way: String) : DBInterface {
+open class DBManagerK(way: String) : DBInterface {
     /**
      * Constant, that keep address of connection
      */
@@ -37,7 +37,7 @@ class DBManagerK(way: String) : DBInterface {
      * Load from DB user which has this login
      * @param login of user
      */
-    override fun loadUser(login: String): User? {
+    protected fun loadUser(login: String): User? {
         try {
             val user = statement.executeQuery(
                     "SELECT NAME, PASSWORD " +
